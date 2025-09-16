@@ -91,15 +91,6 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 		cancelReason = null;
 
 		/*
-		 * Do we have time? If yes we need to fetch the min time index to
-		 * reposition the spots in the correct frame at the end of the
-		 * detection.
-		 */
-		final int timeIndex = img.dimensionIndex( Axes.TIME );
-		final int minT = ( int ) ( ( timeIndex < 0 ) ? 0 : interval.min( interval.numDimensions() - 1 ) );
-		final double frameInterval = ( timeIndex < 0 ) ? 1. : img.averageScale( timeIndex );
-
-		/*
 		 * Dispatch time-points to several tasks.
 		 */
 
@@ -180,20 +171,38 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 		final SpotCollection tmpSpots = new SpotCollection();
 		final double[] calibration = TMUtils.getSpatialCalibration( img );
 		logger.log( "Reading " + command + " results.\n" );
-		for ( int t = 0; t < imps.size(); t++ )
+		for ( final String resultDir : resultDirs )
 		{
-			final String name = nameGen.apply( ( long ) minT + t ) + ".csv";
-			// check if file exists.
-			if ( !new File( name ).exists() )
+			// List all CSV files in the result dir.
+			final File dir = new File( resultDir );
+			final File[] csvFiles = dir.listFiles( ( d, name ) -> name.toLowerCase().endsWith( ".csv" ) );
+			if ( null == csvFiles || 0 == csvFiles.length )
 			{
-				logger.log( "Warning: Could not find expected results file:\n" + name + '\n' );
+				logger.error( baseErrorMessage + "No CSV results found in " + resultDir + '\n' );
+				continue;
 			}
 
+			for ( final File csvFile : csvFiles )
+			{
+				// Read time from file name in the shape of img-t6.csv
+				final String fname = csvFile.getName();
+				final String[] tokens = fname.split( "-" );
+				final String timeStr = tokens[ 1 ].replaceAll( "\\D+", "" );
+				final int t = Integer.parseInt( timeStr );
+
+				// Read spots.
+				final List< Spot > spotsInFrame = SpotiflowUtils.readCSV( csvFile, calibration, logger );
+				tmpSpots.put( t, spotsInFrame );
+			}
 		}
 
 		/*
 		 * Reposition spots with respect to the interval and time.
 		 */
+
+		final int timeIndex = img.dimensionIndex( Axes.TIME );
+		final double frameInterval = ( timeIndex < 0 ) ? 1. : img.averageScale( timeIndex );
+
 		final List< Spot > slist = new ArrayList<>();
 		for ( final Spot spot : tmpSpots.iterable( false ) )
 		{
@@ -202,8 +211,8 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 				final double pos = spot.getDoublePosition( d ) + interval.min( d ) * calibration[ d ];
 				spot.putFeature( Spot.POSITION_FEATURES[ d ], Double.valueOf( pos ) );
 			}
-			// Shift in time.
-			final int frame = spot.getFeature( Spot.FRAME ).intValue() + minT;
+			// Set the time properly.
+			final int frame = spot.getFeature( Spot.FRAME ).intValue();
 			spot.putFeature( Spot.POSITION_T, frame * frameInterval );
 			spot.putFeature( Spot.FRAME, Double.valueOf( frame ) );
 			slist.add( spot );
@@ -374,6 +383,7 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 					 * several threads.
 					 */
 					cli.imageFolder().set( tmpDir.toString() );
+					cli.outputFolder().set( tmpDir.toString() );
 					cmd = CommandBuilder.build( cli );
 				}
 				logger.setStatus( "Running " + command );
