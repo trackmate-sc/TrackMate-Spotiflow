@@ -62,7 +62,7 @@ public class SpotiflowCLI extends CondaCLIConfigurator
 	@Override
 	protected String getCommand()
 	{
-		return "spotiflow-predict";
+		return "spotiflow.cli.predict";
 	}
 
 }
