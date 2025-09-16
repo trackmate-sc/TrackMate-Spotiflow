@@ -15,9 +15,11 @@ public class SpotiflowCLI extends CondaCLIConfigurator
 	/** Target channel in the input image. 1-based index. */
 	private final IntArgument targetChannel;
 
+	private final PathArgument outputFolder;
+
 	public SpotiflowCLI( final int nChannels )
 	{
-		// Folder to store input images.
+		// Folders to store input images and output results.
 		this.imageFolder = addPathArgument()
 				.name( "Input image folder path" )
 				.help( "Path to image file or directory of image files. If a directory, will process all images in the directory." )
@@ -25,6 +27,24 @@ public class SpotiflowCLI extends CondaCLIConfigurator
 				.visible( false )
 				.required( true )
 				.get();
+		this.outputFolder = addPathArgument()
+				.name( "Output folder path" )
+				.help( "Path to output folder." )
+				.argument( "--out-dir" )
+				.visible( false )
+				.required( true )
+				.get();
+
+		// Force calculation of shape parameters
+		addStringArgument()
+				.name( "Estimate fit parameters" )
+				.help( "Estimate fit parameters of detected spots by Gaussian fitting (eg FWHM, intensity)." )
+				.argument( "--estimate-params" )
+				.visible( false )
+				.defaultValue( "true" )
+				.required( true )
+				.get()
+				.set( "true" );
 
 		// Pretrained model.
 		this.modelPretrained = addChoiceArgument()
@@ -47,6 +67,11 @@ public class SpotiflowCLI extends CondaCLIConfigurator
 	public PathArgument imageFolder()
 	{
 		return imageFolder;
+	}
+
+	public PathArgument outputFolder()
+	{
+		return outputFolder;
 	}
 
 	public ChoiceArgument modelPretrained()
