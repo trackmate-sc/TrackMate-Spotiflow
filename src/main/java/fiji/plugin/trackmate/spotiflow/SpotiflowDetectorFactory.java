@@ -93,14 +93,4 @@ public class SpotiflowDetectorFactory< T extends RealType< T > & NativeType< T >
 	{
 		return SpotiflowUtils.spotiflowLogo64();
 	}
-
-	@Override
-	public boolean forbidMultithreading()
-	{
-		/*
-		 * We want to run one frame after another, because the inference for one
-		 * frame takes all the resources anyway.
-		 */
-		return true;
-	}
 }
