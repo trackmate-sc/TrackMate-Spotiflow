@@ -1,0 +1,116 @@
+package fiji.plugin.trackmate.spotiflow;
+
+import java.util.Collections;
+
+import fiji.plugin.trackmate.util.cli.HasInteractivePreview;
+
+public class AdvancedSpotiflowCLI extends SpotiflowCLI implements HasInteractivePreview
+{
+
+	public static final String DEFAULT_SPOTIFLOW_CUSTOM_MODEL_FOLDER_PATH = "";
+
+	public static final String KEY_SPOTIFLOW_CUSTOM_MODEL_FOLDER_PATH = "SPOTIFLOW_MODEL_FILEPATH";
+
+	public static final String KEY_SPOTIFLOW_PRETRAINED_OR_CUSTOM = "PRETRAINED_OR_CUSTOM";
+
+	public static final String KEY_PROBABILITY_THRESHOLD = "PROBABILITY_THRESHOLD";
+
+	public static final String KEY_MIN_DISTANCE = "MIN_DISTANCE";
+
+	private final PathArgument customModelFolder;
+
+	private final SelectableArguments selectPretrainedOrCustom;
+
+	private final DoubleArgument probaThreshold;
+
+	private final DoubleArgument minDistance;
+
+	public AdvancedSpotiflowCLI( final int nChannels, final String units, final double pixelSize )
+	{
+		super( nChannels );
+
+		// Custom model.
+		this.customModelFolder = addPathArgument()
+				.name( "Path to a custom model folder" )
+				.argument( "--model-dir" )
+				.required( true )
+				.help( "Path to a custom model folder." )
+				.defaultValue( DEFAULT_SPOTIFLOW_CUSTOM_MODEL_FOLDER_PATH )
+				.key( KEY_SPOTIFLOW_CUSTOM_MODEL_FOLDER_PATH )
+				.get();
+
+		// State that we can use pretrained or custom.
+		this.selectPretrainedOrCustom = addSelectableArguments()
+				.add( modelPretrained )
+				.add( customModelFolder )
+				.key( KEY_SPOTIFLOW_PRETRAINED_OR_CUSTOM );
+
+		// Probability threhsold.
+		this.probaThreshold = addDoubleArgument()
+				.name( "Probability threshold" )
+				.help( "The probability threshold for peak detection. Increase this value to be more stringent." )
+				.argument( "--probability-threshold" )
+				.min( 0. )
+				.max( 1. )
+				.defaultValue( 0.5 )
+				.key( KEY_PROBABILITY_THRESHOLD )
+				.get();
+
+		// Min distance.
+		this.minDistance = addDoubleArgument()
+				.name( "Min. distance" )
+				.help( "Minimum distance between spots for non-maxima suppression."
+						+ "This defines the minimum distance between detected peaks for them to be considered as different spots." )
+				.argument( "--min-distance" )
+				.defaultValue( 2. * pixelSize )
+				.units( units )
+				.min( pixelSize )
+				.key( KEY_MIN_DISTANCE )
+				.get();
+		// Translate to pixel size.
+		setCommandTranslator( minDistance, d -> {
+			final double dist = ( double ) d;
+			final int distPix = ( int ) ( dist > 0 ? ( dist / pixelSize ) : 0. );
+			// Spotiflow only accepts integer values for this parameter.
+			return Collections.singletonList( "" + distPix );
+		} );
+
+		// Rearrange arguments order.
+		arguments.remove( modelPretrained );
+		arguments.add( 1, modelPretrained );
+		arguments.remove( targetChannel );
+		arguments.add( 5, targetChannel );
+	}
+
+	@Override
+	public String getPreviewArgumentKey()
+	{
+		return KEY_PROBABILITY_THRESHOLD;
+	}
+
+	@Override
+	public String getPreviewAxisLabel()
+	{
+		return "Probability";
+	}
+
+	public PathArgument customModelFolder()
+	{
+		return customModelFolder;
+	}
+
+	public SelectableArguments selectPretrainedOrCustom()
+	{
+		return selectPretrainedOrCustom;
+	}
+
+	public DoubleArgument pobabilityThreshold()
+	{
+		return probaThreshold;
+	}
+
+	public DoubleArgument minDistance()
+	{
+		return minDistance;
+	}
+}
