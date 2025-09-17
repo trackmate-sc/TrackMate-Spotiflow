@@ -114,9 +114,11 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 		 * Create tasks for each list of imps.
 		 */
 
+		final SpotCollection tmpSpots = new SpotCollection();
+		final double[] calibration = TMUtils.getSpatialCalibration( img );
 		processes.clear();
 		for ( final List< ImagePlus > list : timepoints )
-			processes.add( new SpotiflowTask( list ) );
+			processes.add( new SpotiflowTask( list, tmpSpots, calibration ) );
 
 		/*
 		 * Pass tasks to executors.
@@ -162,38 +164,6 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 		{
 			if ( !task.isOk() )
 				return false;
-		}
-
-		/*
-		 * Get the result CSV files back.
-		 */
-
-		final SpotCollection tmpSpots = new SpotCollection();
-		final double[] calibration = TMUtils.getSpatialCalibration( img );
-		logger.log( "Reading " + command + " results.\n" );
-		for ( final String resultDir : resultDirs )
-		{
-			// List all CSV files in the result dir.
-			final File dir = new File( resultDir );
-			final File[] csvFiles = dir.listFiles( ( d, name ) -> name.toLowerCase().endsWith( ".csv" ) );
-			if ( null == csvFiles || 0 == csvFiles.length )
-			{
-				logger.error( baseErrorMessage + "No CSV results found in " + resultDir + '\n' );
-				continue;
-			}
-
-			for ( final File csvFile : csvFiles )
-			{
-				// Read time from file name in the shape of img-t6.csv
-				final String fname = csvFile.getName();
-				final String[] tokens = fname.split( "-" );
-				final String timeStr = tokens[ 1 ].replaceAll( "\\D+", "" );
-				final int t = Integer.parseInt( timeStr );
-
-				// Read spots.
-				final List< Spot > spotsInFrame = SpotiflowUtils.readCSV( csvFile, calibration, logger );
-				tmpSpots.put( t, spotsInFrame );
-			}
 		}
 
 		/*
@@ -317,9 +287,18 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 
 		private final List< ImagePlus > imps;
 
-		public SpotiflowTask( final List< ImagePlus > imps )
+		private final SpotCollection tmpSpots;
+
+		private final double[] calibration;
+
+		public SpotiflowTask(
+				final List< ImagePlus > imps,
+				final SpotCollection tmpSpots,
+				final double[] calibration )
 		{
 			this.imps = imps;
+			this.tmpSpots = tmpSpots;
+			this.calibration = calibration;
 			this.ok = new AtomicBoolean( true );
 		}
 
@@ -409,6 +388,29 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 			{
 				process = null;
 			}
+
+			// List all CSV files in the result dir.
+			final File dir = new File( tmpDir.toString() );
+			final File[] csvFiles = dir.listFiles( ( d, name ) -> name.toLowerCase().endsWith( ".csv" ) );
+			if ( null == csvFiles || 0 == csvFiles.length )
+			{
+				logger.error( baseErrorMessage + "No CSV results found in " + tmpDir + '\n' );
+				return tmpDir.toString();
+			}
+
+			for ( final File csvFile : csvFiles )
+			{
+				// Read time from file name in the shape of img-t6.csv
+				final String fname = csvFile.getName();
+				final String[] tokens = fname.split( "-" );
+				final String timeStr = tokens[ 1 ].replaceAll( "\\D+", "" );
+				final int t = Integer.parseInt( timeStr );
+
+				// Read spots.
+				final List< Spot > spotsInFrame = SpotiflowUtils.readCSV( csvFile, calibration, logger );
+				tmpSpots.put( t, spotsInFrame );
+			}
+
 			return tmpDir.toString();
 		}
 	}
