@@ -119,8 +119,9 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 		final SpotCollection tmpSpots = new SpotCollection();
 		final double[] calibration = TMUtils.getSpatialCalibration( img );
 		processes.clear();
+		int threadID = 0;
 		for ( final List< ImagePlus > list : timepoints )
-			processes.add( new SpotiflowTask( list, tmpSpots, calibration ) );
+			processes.add( new SpotiflowTask( list, tmpSpots, calibration, ++threadID ) );
 
 		/*
 		 * Pass tasks to executors.
@@ -293,14 +294,18 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 
 		private final double[] calibration;
 
+		private final int threadID;
+
 		public SpotiflowTask(
 				final List< ImagePlus > imps,
 				final SpotCollection tmpSpots,
-				final double[] calibration )
+				final double[] calibration,
+				final int threadID )
 		{
 			this.imps = imps;
 			this.tmpSpots = tmpSpots;
 			this.calibration = calibration;
+			this.threadID = threadID;
 			this.ok = new AtomicBoolean( true );
 		}
 
@@ -340,9 +345,9 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 			 * Save time-points as individual frames.
 			 */
 
-			logger.log( "Saving single time-points.\n" );
-			// Careful, now time starts at 0, even if in the interval it is not
-			// the case.
+			if ( threadID == 1 )
+				logger.log( "Saving single time-points.\n" );
+
 			for ( final ImagePlus imp : imps )
 			{
 				final String name = imp.getShortTitle() + ".tif";
@@ -366,11 +371,17 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 					cli.imageFolder().set( tmpDir.toString() );
 					cli.outputFolder().set( tmpDir.toString() );
 					cmd = CommandBuilder.build( cli );
+					logger.setStatus( "Running " + command );
+					logger.log( "Thread " + threadID + ":\n", Logger.BLUE_COLOR.darker() );
+					logger.log( "Running " + command + " with args:\n" );
+					cmd.forEach( t -> {
+						if ( t.contains( File.separator ) )
+							logger.log( t + ' ' );
+						else
+							logger.log( t + ' ', Logger.GREEN_COLOR.darker() );
+					} );
+					logger.log( "\n" );
 				}
-				logger.setStatus( "Running " + command );
-				logger.log( "Running " + command + " with args:\n" );
-				logger.log( String.join( " ", cmd ) );
-				logger.log( "\n" );
 
 				final ProcessBuilder pb = new ProcessBuilder( cmd );
 				pb.redirectOutput( spotiflowLogFile );
