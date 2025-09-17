@@ -17,6 +17,9 @@ public class SpotiflowCLI extends CondaCLIConfigurator
 
 	protected final PathArgument outputFolder;
 
+	/** Store this field so that subclasses can remove it. */
+	protected final StringArgument estimateFitParametersNotShown;
+
 	public SpotiflowCLI( final int nChannels )
 	{
 		// Folders to store input images and output results.
@@ -36,15 +39,15 @@ public class SpotiflowCLI extends CondaCLIConfigurator
 				.get();
 
 		// Force calculation of shape parameters
-		addStringArgument()
+		this.estimateFitParametersNotShown = addStringArgument()
 				.name( "Estimate fit parameters" )
 				.help( "Estimate fit parameters of detected spots by Gaussian fitting (eg FWHM, intensity)." )
 				.argument( "--estimate-params" )
 				.visible( false )
 				.defaultValue( "true" )
 				.required( true )
-				.get()
-				.set( "true" );
+				.get();
+		estimateFitParametersNotShown.set( "true" );
 
 		// Pretrained model.
 		this.modelPretrained = addChoiceArgument()
