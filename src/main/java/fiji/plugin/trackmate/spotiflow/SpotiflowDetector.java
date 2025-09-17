@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import org.apache.commons.io.input.Tailer;
+import org.apache.commons.io.input.TailerListener;
 import org.scijava.Cancelable;
 
 import fiji.plugin.trackmate.Logger;
@@ -78,7 +79,7 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 		this.interval = interval;
 		this.cli = cli;
 		final String command = cli.getCommand();
-		this.spotiflowLogFile = new File( new File( System.getProperty( "user.home" ), "." + command ), "run.log" );
+		this.spotiflowLogFile = new File( new File( System.getProperty( "user.home" ), ".spotiflow" ), "run.log" );
 		this.baseErrorMessage = "[" + command + "Detector] ";
 	}
 
@@ -127,7 +128,7 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 		// Redirect log to logger.
 		final Tailer tailer = Tailer.builder()
 				.setFile( spotiflowLogFile )
-				.setTailerListener( new LoggerTailerListener( logger ) )
+				.setTailerListener( new SpotiflowLoggerTailerListener( logger ) )
 				.setDelayDuration( Duration.ofMillis( 200 ) )
 				.setTailFromEnd( true )
 				.get();
@@ -371,8 +372,8 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 				logger.log( "\n" );
 
 				final ProcessBuilder pb = new ProcessBuilder( cmd );
-				pb.redirectOutput( ProcessBuilder.Redirect.INHERIT );
-				pb.redirectError( ProcessBuilder.Redirect.INHERIT );
+				pb.redirectOutput( spotiflowLogFile );
+				pb.redirectError( spotiflowLogFile );
 
 				process = pb.start();
 				process.waitFor();
@@ -419,5 +420,45 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 	public void setLogger( final Logger logger )
 	{
 		this.logger = logger;
+	}
+
+	private static class SpotiflowLoggerTailerListener extends LoggerTailerListener implements TailerListener
+	{
+
+		public SpotiflowLoggerTailerListener( final Logger logger )
+		{
+			super( logger );
+		}
+
+		@Override
+		public void handle( final String line )
+		{
+			final String cleanedLine = cleanLine( line );
+
+			if ( cleanedLine.contains( "Predicting:" ) )
+			{
+				// Extract percentage from lines with 'Predicting: XX%'
+				final String[] parts = cleanedLine.split( "Predicting:" );
+				if ( parts.length > 1 )
+				{
+					final String percentagePart = parts[ 1 ].trim();
+					final String[] percentageParts = percentagePart.split( "%" );
+					if ( percentageParts.length > 0 )
+					{
+						final String percentage = percentageParts[ 0 ].trim();
+						final double progress = Double.parseDouble( percentage ) / 100.;
+						logger.setProgress( progress );
+					}
+				}
+			}
+
+			// Progress. In Spotiflow, lines with a colon are status
+			final int colonIndex = cleanedLine.indexOf( ':' );
+			if ( colonIndex > 0 )
+			{
+				final String status = cleanedLine.substring( 0, colonIndex ).trim();
+				logger.setStatus( status );
+			}
+		}
 	}
 }
