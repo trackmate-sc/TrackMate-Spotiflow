@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.spotiflow;
 
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION;
+
 import java.util.Collections;
 
 import fiji.plugin.trackmate.util.cli.HasInteractivePreview;
@@ -17,6 +19,8 @@ public class AdvancedSpotiflowCLI extends SpotiflowCLI implements HasInteractive
 
 	public static final String KEY_MIN_DISTANCE = "MIN_DISTANCE";
 
+	private static final String KEY_ESTIMATE_FIT_PARAMETERS = "ESTIMATE_FIT_PARAMETERS";
+
 	private final PathArgument customModelFolder;
 
 	private final SelectableArguments selectPretrainedOrCustom;
@@ -24,6 +28,10 @@ public class AdvancedSpotiflowCLI extends SpotiflowCLI implements HasInteractive
 	private final DoubleArgument probaThreshold;
 
 	private final DoubleArgument minDistance;
+
+	private final Flag fitGaussian;
+
+	private final Flag doSubpixelLocalization;
 
 	public AdvancedSpotiflowCLI( final int nChannels, final String units, final double pixelSize )
 	{
@@ -33,7 +41,6 @@ public class AdvancedSpotiflowCLI extends SpotiflowCLI implements HasInteractive
 		this.customModelFolder = addPathArgument()
 				.name( "Path to a custom model folder" )
 				.argument( "--model-dir" )
-				.required( true )
 				.help( "Path to a custom model folder." )
 				.defaultValue( DEFAULT_SPOTIFLOW_CUSTOM_MODEL_FOLDER_PATH )
 				.key( KEY_SPOTIFLOW_CUSTOM_MODEL_FOLDER_PATH )
@@ -74,6 +81,33 @@ public class AdvancedSpotiflowCLI extends SpotiflowCLI implements HasInteractive
 			// Spotiflow only accepts integer values for this parameter.
 			return Collections.singletonList( "" + distPix );
 		} );
+
+		// Fit parameters calculation (replace existing hidden parameter).
+		arguments.remove( estimateFitParametersNotShown );
+		this.fitGaussian = addFlag()
+				.name( "Estimate radius" )
+				.help( "Estimate radius of detected spots by Gaussian fitting." )
+				.argument( "--estimate-params" )
+				.key( KEY_ESTIMATE_FIT_PARAMETERS )
+				.defaultValue( true )
+				.get();
+		// Translate to 'true' or 'false' for Spotiflow CLI.
+		setCommandTranslator( fitGaussian, b -> ( ( boolean ) b )
+				? Collections.singletonList( "true" )
+				: Collections.singletonList( "false" ) );
+
+		// Skip subpixel accuracy.
+		this.doSubpixelLocalization = addFlag()
+				.name( "Sub-pixel localization" )
+				.help( "Whether to use the stereographic flow to compute subpixel localization." )
+				.argument( "--subpix" )
+				.key( KEY_DO_SUBPIXEL_LOCALIZATION )
+				.defaultValue( true )
+				.get();
+		// Translate to 'true' or 'false' for Spotiflow CLI.
+		setCommandTranslator( doSubpixelLocalization, b -> ( ( boolean ) b )
+				? Collections.singletonList( "true" )
+				: Collections.singletonList( "false" ) );
 
 		// Rearrange arguments order.
 		arguments.remove( modelPretrained );

@@ -48,8 +48,18 @@ public class SpotiflowUtils
 				final double z = zStr == null ? 0. : Double.parseDouble( zStr );
 				// Gaussian sigma to particle radius.
 				final double dimRatio = zStr == null ? Math.sqrt( 2. ) : Math.sqrt( 3. );
-				final double fwhm = Double.parseDouble( values.get( "fwhm" ) );
-				final double r = fwhm / fwhmRatio * dimRatio * calibration[ 0 ];
+				// Radius
+				final double r;
+				final String fwhmStr = values.get( "fwhm" );
+				if ( fwhmStr == null )
+				{
+					r = 0.5 * calibration[ 0 ];
+				}
+				else
+				{
+					final double fwhm = Double.parseDouble( fwhmStr );
+					r = fwhm / fwhmRatio * dimRatio * calibration[ 0 ];
+				}
 				final Spot spot = new Spot( x * calibration[ 0 ], y * calibration[ 1 ], z * calibration[ 2 ], r, quality );
 				spots.add( spot );
 			}
