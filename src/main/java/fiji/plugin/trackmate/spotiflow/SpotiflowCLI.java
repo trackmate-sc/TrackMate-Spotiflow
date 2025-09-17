@@ -8,14 +8,14 @@ public class SpotiflowCLI extends CondaCLIConfigurator
 
 	private static final String KEY_SPOTIFLOW_PRETRAINED_MODEL = "SPOTIFLOW_PRETRAINED_MODEL";
 
-	private final PathArgument imageFolder;
+	protected final PathArgument imageFolder;
 
-	private final ChoiceArgument modelPretrained;
+	protected final ChoiceArgument modelPretrained;
 
 	/** Target channel in the input image. 1-based index. */
-	private final IntArgument targetChannel;
+	protected final IntArgument targetChannel;
 
-	private final PathArgument outputFolder;
+	protected final PathArgument outputFolder;
 
 	public SpotiflowCLI( final int nChannels )
 	{
