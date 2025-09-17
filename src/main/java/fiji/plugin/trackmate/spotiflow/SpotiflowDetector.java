@@ -97,8 +97,9 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 
 		final int c = cli.targetChannel().getValue() - 1; // 0-based
 		final List< ImagePlus > imps = DetectionUtils.splitSingleTimePoints( img, interval, c, nameGen );
+		final int nFrames = imps.size();
 
-		final int nConcurrentTasks = numThreads;
+		final int nConcurrentTasks = Math.min( nFrames, numThreads );
 		final List< List< ImagePlus > > timepoints = new ArrayList<>( nConcurrentTasks );
 		for ( int i = 0; i < nConcurrentTasks; i++ )
 			timepoints.add( new ArrayList<>() );
