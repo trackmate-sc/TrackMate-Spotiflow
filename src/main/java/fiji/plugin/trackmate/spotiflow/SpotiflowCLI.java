@@ -55,12 +55,13 @@ public class SpotiflowCLI extends CondaCLIConfigurator
 				.help( "Pretrained model name" )
 				.key( KEY_SPOTIFLOW_PRETRAINED_MODEL )
 				.argument( "--pretrained-model" )
+				.addChoice( "fluo_live" )
 				.addChoice( "general" )
 				.addChoice( "hybiss" )
 				.addChoice( "synth_complex" )
 				.addChoice( "synth_3d" )
 				.addChoice( "smfish_3d" )
-				.defaultValue( "general" )
+				.defaultValue( "fluo_live" )
 				.get();
 
 		// Target channel.
