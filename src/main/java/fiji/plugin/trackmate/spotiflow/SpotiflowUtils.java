@@ -23,10 +23,20 @@ public class SpotiflowUtils
 
 	public static final ImageIcon spotiflowLogo()
 	{
-		return new ImageIcon( getResource( "images/spotiflow_transp_small.png", SpotiflowUtils.class ) );
+		return new ImageIcon( getResource( "images/spotiflow_logo_squared.png", SpotiflowUtils.class ) );
 	}
 
 	public static final ImageIcon spotiflowLogo64()
+	{
+		return scaleImage( spotiflowLogo(), 64, 64 );
+	}
+
+	public static final ImageIcon spotiflowHorizontalLogo()
+	{
+		return new ImageIcon( getResource( "images/spotiflow_transp_small.png", SpotiflowUtils.class ) );
+	}
+
+	public static final ImageIcon spotiflowHorizontalLogo64()
 	{
 		return scaleImage( spotiflowLogo(), 64, 64 );
 	}
