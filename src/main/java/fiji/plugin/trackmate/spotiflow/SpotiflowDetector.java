@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -28,8 +28,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -405,6 +407,12 @@ public class SpotiflowDetector< T extends RealType< T > & NativeType< T > > impl
 				}
 
 				final ProcessBuilder pb = new ProcessBuilder( cmd );
+				// Env variables.
+				final Map< String, String > env = new HashMap<>();
+				final String condaRootPrefix = CLIUtils.getCondaRootPrefix();
+				env.put( "MAMBA_ROOT_PREFIX", condaRootPrefix );
+				env.put( "CONDA_ROOT_PREFIX", condaRootPrefix );
+				pb.environment().putAll( env );
 				pb.redirectOutput( spotiflowLogFile );
 				pb.redirectError( spotiflowLogFile );
 
