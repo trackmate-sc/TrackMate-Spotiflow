@@ -11,7 +11,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>TrackMate-Spotiflow</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 
 	<name>TrackMate-Spotiflow</name>
 	<description>TrackMate detector based on Spotiflow.</description>
@@ -61,7 +61,7 @@
 	<scm>
 		<connection>scm:git:https://github.com/trackmate-sc/TrackMate-Spotiflow</connection>
 		<developerConnection>scm:git:git@github.com:trackmate-sc/TrackMate-Spotiflow</developerConnection>
-		<tag>HEAD</tag>
+		<tag>TrackMate-Spotiflow-1.0.1</tag>
 		<url>https://github.com/trackmate-sc/TrackMate-Spotiflow</url>
 	</scm>
 	<issueManagement>
