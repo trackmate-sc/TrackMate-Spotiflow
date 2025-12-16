@@ -82,7 +82,10 @@
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 
-		<TrackMate.version>8.1.2-SNAPSHOT</TrackMate.version>
+		<TrackMate.version>8.1.2</TrackMate.version>
+		
+	    <scijava.jvm.version>21</scijava.jvm.version>
+	    <scijava.jvm.build.version>[21,)</scijava.jvm.build.version>
 	</properties>
 
 	<dependencies>
