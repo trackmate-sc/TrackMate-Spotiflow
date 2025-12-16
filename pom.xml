@@ -86,6 +86,7 @@
 		
 	    <scijava.jvm.version>21</scijava.jvm.version>
 	    <scijava.jvm.build.version>[21,)</scijava.jvm.build.version>
+   	    <scijava.javadoc.url.java>https://docs.oracle.com/en/java/javase/21/docs/api/</scijava.javadoc.url.java>
 	</properties>
 
 	<dependencies>
